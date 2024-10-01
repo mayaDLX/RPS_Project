@@ -2,13 +2,14 @@
 FPS = 60
 
 # Display size
-WIDTH, HEIGHT = 500, 500
+WIDTH, HEIGHT = 32, 32
 
 # Pattern Size
-PATTERN_SHAPE = (100, WIDTH // 2, HEIGHT // 2)
+PATTERN_QUARTER_SHAPE = (50, 16, 16)
 
 # Define colors
 WHITE = (255, 255, 255)
 BLACK = (0, 0, 0)
 
 RANDOM = 1
+PERLIN = 2
