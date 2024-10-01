@@ -3,6 +3,7 @@ FPS = 60
 
 # Display size
 WIDTH, HEIGHT = 32, 32
+SCALE_SCREEN = 10
 
 # Pattern Size
 PATTERN_QUARTER_SHAPE = (50, 16, 16)

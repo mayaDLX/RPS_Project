@@ -4,12 +4,13 @@ import args
 import numpy as np
 import noise
 
+keys = [pygame.K_1, pygame.K_2, pygame.K_3, pygame.K_4]
 def generate_random_black_dots():
     """Generate random black pixels placed on the screen."""
     surface = pygame.Surface((args.WIDTH, args.HEIGHT))
     surface.fill(args.WHITE)  # Start with a white surface
 
-    num_black_dots = int(0.005 * args.WIDTH * args.HEIGHT)
+    num_black_dots = 2
     for _ in range(num_black_dots):  # Add random black pixels
         x, y = random.randint(0, args.WIDTH - 1), random.randint(0, args.HEIGHT - 1)
         surface.set_at((x, y), args.BLACK)
@@ -104,13 +105,9 @@ def main():
     # Initialize Pygame
     pygame.init()
 
-    # Define the original small screen size and the scaling factor
-    small_screen_width, small_screen_height = 32, 32  # Original size
-    scale_factor = 10  # Scale up by a factor of 10 (adjust as needed)
-
     # Calculate the new window size after scaling
-    scaled_width = small_screen_width * scale_factor
-    scaled_height = small_screen_height * scale_factor
+    scaled_width = args.WIDTH * args.SCALE_SCREEN
+    scaled_height = args.HEIGHT * args.SCALE_SCREEN
 
     # Set up the display with the new scaled size
     screen = pygame.display.set_mode((scaled_width, scaled_height))
@@ -120,7 +117,7 @@ def main():
     clock = pygame.time.Clock()
 
     # Create a smaller surface to draw the original 32x32 content
-    small_screen = pygame.Surface((small_screen_width, small_screen_height))
+    small_screen = pygame.Surface((args.WIDTH, args.HEIGHT))
 
     # Main loop
     running = True
@@ -128,39 +125,25 @@ def main():
     burst_active = False
     active_quadrant = 0
 
-    pattern_array = generate_patten(args.PERLIN, args.PATTERN_QUARTER_SHAPE)
+    pattern_array = generate_patten(args.RANDOM, args.PATTERN_QUARTER_SHAPE)
     constant_pattern_frames = convert_array_to_frames(pattern_array)
     print(constant_pattern_frames)
 
     while running:
         # Fill the small screen with a white background
-        small_screen.fill((255, 255, 255))
+        small_screen.fill(args.WHITE)
 
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 running = False
 
             elif event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_1:
-                    burst_frames = constant_pattern_frames
-                    burst_active = True
-                    frame_index = 0
-                    active_quadrant = 1  # Top-right
-                elif event.key == pygame.K_2:
-                    burst_frames = constant_pattern_frames
-                    burst_active = True
-                    frame_index = 0
-                    active_quadrant = 2  # Top-left
-                elif event.key == pygame.K_3:
-                    burst_frames = constant_pattern_frames
-                    burst_active = True
-                    frame_index = 0
-                    active_quadrant = 3  # Bottom-right
-                elif event.key == pygame.K_4:
-                    burst_frames = constant_pattern_frames
-                    burst_active = True
-                    frame_index = 0
-                    active_quadrant = 4  # Bottom-left
+                for i in range(len(keys)):
+                    if event.key == keys[i]:
+                        burst_frames = constant_pattern_frames
+                        burst_active = True
+                        frame_index = 0
+                        active_quadrant = i + 1
 
         # Generate random black dots on the small screen
         small_screen.blit(generate_random_black_dots(), (0, 0))
