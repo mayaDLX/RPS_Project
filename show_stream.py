@@ -13,6 +13,7 @@ pygame.display.set_caption('Random Dots with Stripe Burst')
 fps = arg.FPS
 clock = pygame.time.Clock()
 
+g_constant_pattern = []
 
 def generate_random_black_dots():
     """Generate random black pixels placed on the screen."""
@@ -26,15 +27,19 @@ def generate_random_black_dots():
     return surface
 
 
+def generate_random_pattern(shape, min_value=0, max_value=256, step=255):
+    return np.random.choice(np.arange(min_value, max_value + step, step), size=shape)
+
+
 def create_stripes_array(frames, width, height, stripe_width, speed):
-    """Create a 3D NumPy array representing black and white moving stripes."""
+    """Create a 3D NumPy array representing black and white moving stripes for one quadrant."""
     # Initialize a 3D array: (number of frames, height, width)
     stripe_array = np.ones((frames, height, width), dtype=np.uint8) * 255  # Start with white (255)
 
     for frame in range(frames):
         offset = (frame * speed) % (stripe_width * 2)  # Calculate moving offset
 
-        for i in range(-stripe_width, width, stripe_width * 2):  # Fix to ensure consistent rendering
+        for i in range(-stripe_width, width, stripe_width * 2):  # Ensure consistent rendering
             start = (i + offset) % width
             end = min(start + stripe_width, width)
             stripe_array[frame, :, start:end] = 0  # Set stripe to black
@@ -42,12 +47,12 @@ def create_stripes_array(frames, width, height, stripe_width, speed):
     return stripe_array
 
 
-def convert_array_to_frames(stripe_array):
-    """Convert a 3D NumPy array into a list of Pygame surfaces."""
+def convert_array_to_frames(array: np.ndarray):
+    """Convert a 3D NumPy array into a list of Pygame surfaces matching the quadrant size."""
     frames = []
-
-    for frame in stripe_array:
-        surface = pygame.Surface((arg.WIDTH, arg.HEIGHT))
+    shape = array.shape  # shape = (F, H, W)
+    for frame in array:
+        surface = pygame.Surface((shape[2], shape[1]))  # Create surface matching quadrant size
         pygame.surfarray.blit_array(surface, np.stack([frame] * 3, axis=-1))  # Convert to RGB format
         frames.append(surface)
 
@@ -55,11 +60,37 @@ def convert_array_to_frames(stripe_array):
 
 
 def generate_moving_stripes():
-    """Generate an array of frames with black and white moving stripes."""
-    # Increase stripe width for less flicker and reduce speed for smoother transition
-    stripe_array = create_stripes_array(100, arg.WIDTH, arg.HEIGHT, stripe_width=50, speed=2)
+    """Generate an array of frames with black and white moving stripes for one quadrant."""
+    # The stripe array is created for a quadrant (half the width and height of the screen)
+    stripe_array = generate_random_pattern((100, arg.WIDTH // 2, arg.HEIGHT // 2))
     burst_frames = convert_array_to_frames(stripe_array)
     return burst_frames
+
+
+def get_location(quadrant):
+    if quadrant == 1:  # Top-right
+        x = arg.WIDTH // 2
+        y = 0
+    elif quadrant == 2:  # Top-left
+        x = 0
+        y = 0
+    elif quadrant == 3:  # Bottom-right
+        x = arg.WIDTH // 2
+        y = arg.HEIGHT // 2
+    elif quadrant == 4:  # Bottom-left
+        x = 0
+        y = arg.HEIGHT // 2
+    else:
+        return
+    return x, y
+
+def draw_stripes_in_quadrant(screen, frames, frame_index, quadrant):
+    """Draw stripes in the specified quadrant of the screen."""
+
+    location = get_location(quadrant)
+
+    # Blit the stripes into the specified quadrant
+    screen.blit(frames[frame_index], location)
 
 
 def main():
@@ -68,6 +99,10 @@ def main():
     burst_frames = []
     frame_index = 0
     burst_active = False
+    active_quadrant = 0
+
+    global g_constant_pattern
+    g_constant_pattern = generate_moving_stripes()
 
     while running:
 
@@ -80,13 +115,31 @@ def main():
 
             elif event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_1:
-                    burst_frames = generate_moving_stripes()
+                    burst_frames = g_constant_pattern
                     burst_active = True
                     frame_index = 0
+                    active_quadrant = 1  # Top-right
+                elif event.key == pygame.K_2:
+                    burst_frames = g_constant_pattern
+                    burst_active = True
+                    frame_index = 0
+                    active_quadrant = 2  # Top-left
+                elif event.key == pygame.K_3:
+                    burst_frames = g_constant_pattern
+                    burst_active = True
+                    frame_index = 0
+                    active_quadrant = 3  # Bottom-right
+                elif event.key == pygame.K_4:
+                    burst_frames = g_constant_pattern
+                    burst_active = True
+                    frame_index = 0
+                    active_quadrant = 4  # Bottom-left
 
-        # If burst is active, play the animation
+        # If burst is active, play the animation in the selected location
         if burst_active:
-            screen.blit(burst_frames[frame_index], (0, 0))
+            location = get_location(active_quadrant)
+            # Blit the pattern into the specified location
+            screen.blit(burst_frames[frame_index], location)
             frame_index += 1
             if frame_index >= len(burst_frames):
                 burst_active = False  # End the animation after all frames are shown
