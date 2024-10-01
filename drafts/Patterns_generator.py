@@ -1,7 +1,9 @@
 import numpy as np
 import cv2
 import noise
-
+FRAME_SIZE = 100
+PATTERN_LENGTH = 20
+IMAGE_SIZE = 400
 # Parameters
 canvas_x_dim = 100
 canvas_y_dim = 100
