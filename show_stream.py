@@ -1,28 +1,28 @@
 import pygame
 import random
-import arg
+import args
 import numpy as np
 
 # Initialize Pygame
 pygame.init()
 
 # Set up the display
-screen = pygame.display.set_mode((arg.WIDTH, arg.HEIGHT))
+screen = pygame.display.set_mode((args.WIDTH, args.HEIGHT))
 pygame.display.set_caption('Random Dots with Stripe Burst')
 
-fps = arg.FPS
+fps = args.FPS
 clock = pygame.time.Clock()
 
 g_constant_pattern = []
 
 def generate_random_black_dots():
     """Generate random black pixels placed on the screen."""
-    surface = pygame.Surface((arg.WIDTH, arg.HEIGHT))
-    surface.fill(arg.WHITE)  # Start with a white surface
+    surface = pygame.Surface((args.WIDTH, args.HEIGHT))
+    surface.fill(args.WHITE)  # Start with a white surface
 
     for _ in range(100):  # Add random black pixels
-        x, y = random.randint(0, arg.WIDTH - 1), random.randint(0, arg.HEIGHT - 1)
-        surface.set_at((x, y), arg.BLACK)
+        x, y = random.randint(0, args.WIDTH - 1), random.randint(0, args.HEIGHT - 1)
+        surface.set_at((x, y), args.BLACK)
 
     return surface
 
@@ -31,20 +31,11 @@ def generate_random_pattern(shape, min_value=0, max_value=256, step=255):
     return np.random.choice(np.arange(min_value, max_value + step, step), size=shape)
 
 
-def create_stripes_array(frames, width, height, stripe_width, speed):
-    """Create a 3D NumPy array representing black and white moving stripes for one quadrant."""
-    # Initialize a 3D array: (number of frames, height, width)
-    stripe_array = np.ones((frames, height, width), dtype=np.uint8) * 255  # Start with white (255)
-
-    for frame in range(frames):
-        offset = (frame * speed) % (stripe_width * 2)  # Calculate moving offset
-
-        for i in range(-stripe_width, width, stripe_width * 2):  # Ensure consistent rendering
-            start = (i + offset) % width
-            end = min(start + stripe_width, width)
-            stripe_array[frame, :, start:end] = 0  # Set stripe to black
-
-    return stripe_array
+def generate_patten(pattern_type, shape):
+    pattern = []
+    if pattern_type == args.RANDOM:
+        pattern = generate_random_pattern(shape)
+    return pattern
 
 
 def convert_array_to_frames(array: np.ndarray):
@@ -62,47 +53,39 @@ def convert_array_to_frames(array: np.ndarray):
 def generate_moving_stripes():
     """Generate an array of frames with black and white moving stripes for one quadrant."""
     # The stripe array is created for a quadrant (half the width and height of the screen)
-    stripe_array = generate_random_pattern((100, arg.WIDTH // 2, arg.HEIGHT // 2))
+    stripe_array = generate_random_pattern((100, args.WIDTH // 2, args.HEIGHT // 2))
     burst_frames = convert_array_to_frames(stripe_array)
     return burst_frames
 
 
 def get_location(quadrant):
     if quadrant == 1:  # Top-right
-        x = arg.WIDTH // 2
+        x = args.WIDTH // 2
         y = 0
     elif quadrant == 2:  # Top-left
         x = 0
         y = 0
     elif quadrant == 3:  # Bottom-right
-        x = arg.WIDTH // 2
-        y = arg.HEIGHT // 2
+        x = args.WIDTH // 2
+        y = args.HEIGHT // 2
     elif quadrant == 4:  # Bottom-left
         x = 0
-        y = arg.HEIGHT // 2
+        y = args.HEIGHT // 2
     else:
         return
     return x, y
-
-def draw_stripes_in_quadrant(screen, frames, frame_index, quadrant):
-    """Draw stripes in the specified quadrant of the screen."""
-
-    location = get_location(quadrant)
-
-    # Blit the stripes into the specified quadrant
-    screen.blit(frames[frame_index], location)
 
 
 def main():
     # Main loop
     running = True
-    burst_frames = []
     frame_index = 0
     burst_active = False
     active_quadrant = 0
 
     global g_constant_pattern
-    g_constant_pattern = generate_moving_stripes()
+    pattern_array = generate_patten(args.RANDOM, args.PATTERN_SHAPE)
+    g_constant_pattern = convert_array_to_frames(pattern_array)
 
     while running:
 
