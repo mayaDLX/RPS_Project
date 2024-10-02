@@ -34,9 +34,10 @@ class WebSocketServer:
         # Check and process the client input
         if self.client_input is not None:
             print(f"Current client input: {self.client_input}")
-            for i in range(len(self.messages)):
-                if self.client_input == self.messages[i]:
-                    self.stream.update_by_input(i)
+            if not self.stream.burst_active:
+                for i in range(len(self.messages)):
+                    if self.client_input == self.messages[i]:
+                        self.stream.update_by_input(i)
         else:
             print("No input from client yet.")
 
