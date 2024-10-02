@@ -2,69 +2,7 @@ import pygame
 import random
 import args
 import numpy as np
-import noise
-
-class patterns_generator:
-    def generate_random_pattern(self, shape, min_value=0, max_value=256, step=255):
-        return np.random.choice(np.arange(min_value, max_value + step, step), size=shape)
-
-    def generate_perlin_noise_3d(self, shape, scale=0.1, octaves=6, persistence=0.5, lacunarity=2.0, seed=None):
-        if seed:
-            np.random.seed(seed)
-        noise_array = np.zeros(shape)
-
-        for x in range(shape[0]):
-            for y in range(shape[1]):
-                for z in range(shape[2]):
-                    noise_array[x][y][z] = noise.pnoise3(
-                        x * scale,
-                        y * scale,
-                        z * scale,
-                        octaves=octaves,
-                        persistence=persistence,
-                        lacunarity=lacunarity,
-                        repeatx=8,
-                        repeaty=8,
-                        repeatz=8,
-                        base=0
-                    )
-
-        # Normalize the values to be between 0 and 1
-        min_val = np.min(noise_array)
-        max_val = np.max(noise_array)
-
-        if max_val != min_val:
-            noise_array = (noise_array - min_val) / (max_val - min_val)
-
-        noise_array *= 255
-        return noise_array
-
-
-    def generate_patten_array(self, pattern_type, shape):
-        pattern = []
-        if pattern_type == args.RANDOM:
-            pattern = self.generate_random_pattern(shape)
-        if pattern_type == args.PERLIN:
-            pattern = self.generate_perlin_noise_3d(shape)
-        return pattern
-
-
-    def convert_array_to_frames(self, array: np.ndarray):
-        """Convert a 3D NumPy array into a list of Pygame surfaces matching the quadrant size."""
-        frames = []
-        shape = array.shape  # shape = (F, H, W)
-        for frame in array:
-            surface = pygame.Surface((shape[2], shape[1]))  # Create surface matching quadrant size
-            pygame.surfarray.blit_array(surface, np.stack([frame] * 3, axis=-1))  # Convert to RGB format
-            frames.append(surface)
-
-        return frames
-
-    def generate_visual_pattern(self, pattern_type, shape):
-        array = self.generate_patten_array(pattern_type, shape)
-        frames = self.convert_array_to_frames(array)
-        return frames
-
+import patterns_generator
 
 
 class visualize_stream:
@@ -91,10 +29,26 @@ class visualize_stream:
         self.burst_active = False
         self.active_quadrant = 0
 
-        self.pg = patterns_generator()
-        self.constant_pattern = self.pg.generate_visual_pattern(args.RANDOM, args.PATTERN_QUARTER_SHAPE)
+        self.pg = patterns_generator.patterns_generator()
+        self.constant_pattern = self.generate_visual_pattern(args.RANDOM, args.PATTERN_QUARTER_SHAPE)
 
         self.keys = [pygame.K_1, pygame.K_2, pygame.K_3, pygame.K_4]
+
+    def convert_array_to_frames(self, array: np.ndarray):
+        """Convert a 3D NumPy array into a list of Pygame surfaces matching the quadrant size."""
+        frames = []
+        shape = array.shape  # shape = (F, H, W)
+        for frame in array:
+            surface = pygame.Surface((shape[2], shape[1]))  # Create surface matching quadrant size
+            pygame.surfarray.blit_array(surface, np.stack([frame] * 3, axis=-1))  # Convert to RGB format
+            frames.append(surface)
+
+        return frames
+
+    def generate_visual_pattern(self, pattern_type, shape):
+        array = self.pg.generate_patten_array(pattern_type, shape)
+        frames = self.convert_array_to_frames(array)
+        return frames
 
     def generate_random_black_dots(self):
         """Generate random black pixels placed on the screen."""

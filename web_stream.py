@@ -10,6 +10,7 @@ class WebSocketServer:
         self.host = host
         self.port = port
         self.client_input = None  # Store input from the WebSocket client
+        self.current_posture = None  # Track the current posture
         self.server = None
         self.stream = show_stream.visualize_stream()
         self.messages = ["rock", "paper", "scissors"]
@@ -34,10 +35,12 @@ class WebSocketServer:
         # Check and process the client input
         if self.client_input is not None:
             print(f"Current client input: {self.client_input}")
-            if not self.stream.burst_active:
+            if self.client_input != self.current_posture:  # Only if posture has changed
                 for i in range(len(self.messages)):
                     if self.client_input == self.messages[i]:
                         self.stream.update_by_input(i)
+                        self.current_posture = self.client_input  # Update the current posture
+                        break
         else:
             print("No input from client yet.")
 
@@ -46,6 +49,12 @@ class WebSocketServer:
     # Main loop to process client input and render animation
     async def screen_loop(self):
         while self.stream.running:
+
+            # Handle Pygame events (this prevents freezing)
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    self.stream.running = False
+
             # Fill the small screen with a white background
             self.stream.pixels_screen.fill(args.WHITE)
 
