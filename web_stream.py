@@ -29,6 +29,19 @@ class WebSocketServer:
         print(f"WebSocket server started on {self.host}:{self.port}")
         await self.server.wait_closed()  # Keeps the server running
 
+
+    async def check_input(self):
+        # Check and process the client input
+        if self.client_input is not None:
+            print(f"Current client input: {self.client_input}")
+            for i in range(len(self.messages)):
+                if self.client_input == self.messages[i]:
+                    self.stream.update_by_input(i)
+        else:
+            print("No input from client yet.")
+
+        await asyncio.sleep(0)  # Yield control to allow other tasks to run
+
     # Main loop to process client input and render animation
     async def screen_loop(self):
         while self.stream.running:
@@ -37,6 +50,11 @@ class WebSocketServer:
 
             # Generate random black dots as background
             self.stream.pixels_screen.blit(self.stream.generate_random_black_dots(), (0, 0))
+
+            await self.check_input()
+
+            # If burst is active, play the animation in the selected location
+            self.stream.play_animation()
 
             # Scale up the small screen to the larger window
             scaled_screen = pygame.transform.scale(self.stream.pixels_screen, args.SCALED_SIZE)
@@ -48,13 +66,7 @@ class WebSocketServer:
             pygame.display.flip()
             self.stream.clock.tick(self.stream.fps)  # Limit the frame rate to the specified FPS
 
-            # Check and process the client input
-            if self.client_input is not None:
-                print(f"Current client input: {self.client_input}")
-            else:
-                print("No input from client yet.")
 
-            await asyncio.sleep(0)  # Yield control to allow other tasks to run
 
     # Main function to run both the WebSocket server and the screen loop concurrently
     async def run(self):
