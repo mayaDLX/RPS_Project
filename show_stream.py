@@ -107,6 +107,13 @@ class visualize_stream:
 
         return surface
 
+
+    def update_by_input(self, i):
+        self.burst_frames = self.constant_pattern
+        self.burst_active = True
+        self.frame_index = 0
+        self.active_quadrant = i + 1
+
     def check_input(self):
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -115,10 +122,7 @@ class visualize_stream:
             elif event.type == pygame.KEYDOWN:
                 for i in range(len(self.keys)):
                     if event.key == self.keys[i]:
-                        self.burst_frames = self.constant_pattern
-                        self.burst_active = True
-                        self.frame_index = 0
-                        self.active_quadrant = i + 1
+                        self.update_by_input(i)
 
 
     def play_animation(self):
