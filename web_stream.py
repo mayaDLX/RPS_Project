@@ -14,6 +14,8 @@ class WebSocketServer:
         self.server = None
         self.stream = show_stream.visualize_stream()
         self.messages = ["rock", "paper", "scissors"]
+        self.key_events =[]
+        self.keys = [pygame.K_1, pygame.K_2, pygame.K_3, pygame.K_4]
 
     # WebSocket server handling
     async def handle_connection(self, websocket, path):
@@ -31,6 +33,17 @@ class WebSocketServer:
         await self.server.wait_closed()  # Keeps the server running
 
 
+    async def debug_react(self):
+        print("debug_react")
+        for event in self.key_events:
+            if event.type == pygame.KEYDOWN:
+                for i in range(len(self.keys)):
+                    if event.key == self.keys[i]:
+                        self.stream.update_by_input(i)
+                        self.current_posture = self.messages[i]  # Update the current posture
+                        break
+
+
     async def check_input(self):
         # Check and process the client input
         if self.client_input is not None:
@@ -43,6 +56,8 @@ class WebSocketServer:
                         break
         else:
             print("No input from client yet.")
+            await self.debug_react()
+
 
         await asyncio.sleep(0)  # Yield control to allow other tasks to run
 
@@ -51,7 +66,8 @@ class WebSocketServer:
         while self.stream.running:
 
             # Handle Pygame events (this prevents freezing)
-            for event in pygame.event.get():
+            self.key_events = pygame.event.get()
+            for event in self.key_events:
                 if event.type == pygame.QUIT:
                     self.stream.running = False
 

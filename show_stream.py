@@ -30,7 +30,7 @@ class visualize_stream:
         self.active_quadrant = 0
 
         self.pg = patterns_generator.patterns_generator()
-        self.constant_pattern = self.generate_visual_pattern(args.RANDOM, args.PATTERN_QUARTER_SHAPE)
+        self.constant_pattern = self.generate_visual_pattern(args.CHOSEN_PATTERN, args.PATTERN_QUARTER_SHAPE)
 
         self.keys = [pygame.K_1, pygame.K_2, pygame.K_3, pygame.K_4]
 

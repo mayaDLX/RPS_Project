@@ -36,6 +36,28 @@ class patterns_generator:
         noise_array *= 255
         return noise_array
 
+    def create_pulse_animation_array(self, shape, pulse_speed):
+        animation_array = np.zeros(shape,
+                                   dtype=np.uint8)  # 3D numpy array for (frames, height, width)
+
+        # Maximum radius is half of the smallest dimension
+        max_radius = min(shape[1], shape[2]) // 2
+        center = (shape[1] // 2, shape[2] // 2)
+
+        # Precompute distances for all points from the center
+        y, x = np.ogrid[:shape[1], :shape[2]]
+        distance_from_center = np.sqrt((x - center[1]) ** 2 + (y - center[0]) ** 2)
+
+        # For each frame, calculate the pulse and brightness
+        for frame in range(shape[0]):
+            radius = pulse_speed * frame
+            radius = min(radius, max_radius)  # Cap the radius at max_radius
+            brightness = int(255 * (radius / max_radius))  # Brightness grows as radius grows
+
+            # Fill the frame with brightness where distance <= radius
+            animation_array[frame] = np.where(distance_from_center <= radius, brightness, 255)
+
+        return animation_array
 
     def generate_patten_array(self, pattern_type, shape):
         pattern = []
@@ -43,6 +65,8 @@ class patterns_generator:
             pattern = self.generate_random_pattern(shape)
         if pattern_type == args.PERLIN:
             pattern = self.generate_perlin_noise_3d(shape)
+        if pattern_type == args.PULSE:
+            pattern = self.create_pulse_animation_array(shape, args.PULSE_SPEED)
         return pattern
 
 
