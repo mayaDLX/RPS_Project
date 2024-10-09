@@ -5,7 +5,37 @@ import numpy as np
 import patterns_generator
 
 
-class visualize_stream:
+def convert_array_to_frames(array: np.ndarray):
+    """Convert a 3D NumPy array into a list of Pygame surfaces matching the quadrant size."""
+    frames = []
+    shape = array.shape  # shape = (F, H, W)
+    for frame in array:
+        surface = pygame.Surface((shape[2], shape[1]))  # Create surface matching quadrant size
+        pygame.surfarray.blit_array(surface, np.stack([frame] * 3, axis=-1))  # Convert to RGB format
+        frames.append(surface)
+
+    return frames
+
+
+def generate_random_black_dots():
+    """Generate random black pixels placed on the screen."""
+    surface = pygame.Surface((args.WIDTH, args.HEIGHT))
+    surface.fill(args.WHITE)  # Start with a white surface
+
+    for _ in range(args.VOL_BACKGROUND_NOISE):  # Add random black pixels
+        x, y = random.randint(0, args.WIDTH - 1), random.randint(0, args.HEIGHT - 1)
+        surface.set_at((x, y), args.BLACK)
+
+    return surface
+
+
+def generate_visual_pattern(pattern_type, shape):
+    array = patterns_generator.generate_patten_array(pattern_type, shape)
+    frames = convert_array_to_frames(array)
+    return frames
+
+
+class VisualizeStream:
 
     def __init__(self):
         # Game screen setup:
@@ -28,39 +58,9 @@ class visualize_stream:
         self.frame_index = 0
         self.burst_active = False
         self.active_quadrant = 0
-
-        self.pg = patterns_generator.patterns_generator()
-        self.constant_pattern = self.generate_visual_pattern(args.CHOSEN_PATTERN, args.PATTERN_QUARTER_SHAPE)
+        self.constant_pattern = generate_visual_pattern(args.CHOSEN_PATTERN, args.PATTERN_QUARTER_SHAPE)
 
         self.keys = [pygame.K_1, pygame.K_2, pygame.K_3, pygame.K_4]
-
-    def convert_array_to_frames(self, array: np.ndarray):
-        """Convert a 3D NumPy array into a list of Pygame surfaces matching the quadrant size."""
-        frames = []
-        shape = array.shape  # shape = (F, H, W)
-        for frame in array:
-            surface = pygame.Surface((shape[2], shape[1]))  # Create surface matching quadrant size
-            pygame.surfarray.blit_array(surface, np.stack([frame] * 3, axis=-1))  # Convert to RGB format
-            frames.append(surface)
-
-        return frames
-
-    def generate_visual_pattern(self, pattern_type, shape):
-        array = self.pg.generate_patten_array(pattern_type, shape)
-        frames = self.convert_array_to_frames(array)
-        return frames
-
-    def generate_random_black_dots(self):
-        """Generate random black pixels placed on the screen."""
-        surface = pygame.Surface((args.WIDTH, args.HEIGHT))
-        surface.fill(args.WHITE)  # Start with a white surface
-
-        for _ in range(args.VOL_BACKGROUND_NOISE):  # Add random black pixels
-            x, y = random.randint(0, args.WIDTH - 1), random.randint(0, args.HEIGHT - 1)
-            surface.set_at((x, y), args.BLACK)
-
-        return surface
-
 
     def update_by_input(self, i):
         self.burst_frames = self.constant_pattern
@@ -77,7 +77,6 @@ class visualize_stream:
                 for i in range(len(self.keys)):
                     if event.key == self.keys[i]:
                         self.update_by_input(i)
-
 
     def play_animation(self):
         if self.burst_active:
@@ -96,7 +95,7 @@ class visualize_stream:
             self.check_input()
 
             # Generate random black dots as background
-            self.pixels_screen.blit(self.generate_random_black_dots(), (0, 0))
+            self.pixels_screen.blit(generate_random_black_dots(), (0, 0))
 
             # If burst is active, play the animation in the selected location
             self.play_animation()
@@ -114,8 +113,9 @@ class visualize_stream:
             # Quit Pygame
         pygame.quit()
 
+
 def main():
-    vs = visualize_stream()
+    vs = VisualizeStream()
     vs.main_loop()
 
 

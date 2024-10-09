@@ -12,9 +12,9 @@ class WebSocketServer:
         self.client_input = None  # Store input from the WebSocket client
         self.current_posture = None  # Track the current posture
         self.server = None
-        self.stream = show_stream.visualize_stream()
+        self.stream = show_stream.VisualizeStream()
         self.messages = ["rock", "paper", "scissors"]
-        self.key_events =[]
+        self.key_events = []
         self.keys = [pygame.K_1, pygame.K_2, pygame.K_3, pygame.K_4]
 
     # WebSocket server handling
@@ -32,7 +32,6 @@ class WebSocketServer:
         print(f"WebSocket server started on {self.host}:{self.port}")
         await self.server.wait_closed()  # Keeps the server running
 
-
     async def debug_react(self):
         print("debug_react")
         for event in self.key_events:
@@ -42,7 +41,6 @@ class WebSocketServer:
                         self.stream.update_by_input(i)
                         self.current_posture = self.messages[i]  # Update the current posture
                         break
-
 
     async def check_input(self):
         # Check and process the client input
@@ -57,7 +55,6 @@ class WebSocketServer:
         else:
             print("No input from client yet.")
             await self.debug_react()
-
 
         await asyncio.sleep(0)  # Yield control to allow other tasks to run
 
@@ -75,7 +72,7 @@ class WebSocketServer:
             self.stream.pixels_screen.fill(args.WHITE)
 
             # Generate random black dots as background
-            self.stream.pixels_screen.blit(self.stream.generate_random_black_dots(), (0, 0))
+            self.stream.pixels_screen.blit(show_stream.generate_random_black_dots(), (0, 0))
 
             await self.check_input()
 
@@ -92,8 +89,6 @@ class WebSocketServer:
             pygame.display.flip()
             self.stream.clock.tick(self.stream.fps)  # Limit the frame rate to the specified FPS
 
-
-
     # Main function to run both the WebSocket server and the screen loop concurrently
     async def run(self):
         # Start WebSocket server and screen loop concurrently
@@ -102,7 +97,3 @@ class WebSocketServer:
             self.screen_loop()
         )
 
-
-if __name__ == '__main__':
-    server = WebSocketServer()
-    asyncio.run(server.run())
