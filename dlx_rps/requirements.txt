@@ -1,0 +1,11 @@
+pyqt5
+pyqtgraph
+zmq
+matplotlib
+numpy
+pyyaml
+scipy
+pandas
+pyarrow
+pyyaml
+coloredlogs
