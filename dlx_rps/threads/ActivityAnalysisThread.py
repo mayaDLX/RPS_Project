@@ -22,19 +22,23 @@ logger = setup_logger(__name__, debug=DEBUG)
 
 class ActivityAnalysisThread(QThread):
     """Receive and analyze activity from Maxwell chip"""
-    def __init__(self, rx_samples_rdy):
+    def __init__(self, rx_samples_rdy, chan2el:np.ndarray):
         """Initialize"""
         super().__init__()
 
         # Thread parameters
         self.stop_requested = False
 
+        # Conversion array from channels to electrode index
+        self.chan2el = chan2el # chan2el[channel] -> electrode
+        logger.debug(f"Channel {0} is connected to electrode {chan2el[0]}")
+
         # Connect forward data to analysis when available
         rx_samples_rdy.connect(self.analyze_activity)
 
     def analyze_activity(self, rx_samples):
         """Analyze activity"""
-        logger.info("Received %d samples", len(rx_samples))
+        logger.debug("Received %d samples", len(rx_samples))
 
     def run(self):
         """Run thread"""

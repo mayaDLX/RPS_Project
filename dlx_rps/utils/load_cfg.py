@@ -14,11 +14,17 @@
 
 # GUI File path
 import os, sys
-import tkinter as tk
 import yaml
+
+## tkinter
+import tkinter as tk
 from tkinter.filedialog import askopenfilename
 tk.Tk().withdraw()
 
+## pyqt5
+from PyQt5.QtWidgets import (QFileDialog, QApplication)
+
+# Loger
 from config import DEBUG
 from utils.logger import setup_logger
 logger = setup_logger(__name__, debug=DEBUG)
@@ -29,7 +35,18 @@ logger = setup_logger(__name__, debug=DEBUG)
 def load_yaml_configuration_file():
     """Load experiment configuration file"""
     # Ask configuration file path
-    fpath_config = askopenfilename(filetypes=[("YAML files", "*.yaml"), ("All files", "*.*")], defaultextension='.yaml')
+    if QApplication.instance(): # if qt app running uses Qt
+        fpath_config, _ = QFileDialog.getOpenFileName(
+            None,
+            "Select a YAML file",
+            "",
+            "YAML files (*.yaml);;All files (*)"
+        )
+    else: # is not qt app use tkinter
+        fpath_config = askopenfilename(
+            filetypes=[("YAML files", "*.yaml"), ("All files", "*.*")], 
+            defaultextension='.yaml'
+        )
 
     # Check path
     if fpath_config:

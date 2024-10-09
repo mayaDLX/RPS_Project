@@ -1,12 +1,15 @@
 RUNTIME: 3
 
 MAXWELL_PARAMS:
+  SAVING:
+    DIRPATH: "here/"
+    SAVE_RAW: False
   ELEC_ARRAY:
     FPATH_CFG: "dummy.cfg"
   SAMPLE_STREAM:
     N_SAMPLES: 1000
     CHANNELS: 1024
   UNIFIED_STIMULATOR:
-    CHAN_ID: [1,2,3,4]
+    EL_ID: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31]
     AMP_MV: 400
     FREQ_HZ: 100

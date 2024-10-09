@@ -12,11 +12,19 @@
 # 
 # @details
 
-from maxwellio.array import ElectrodeArray, MaxWellElectrodeArray, MockElectrodeArray
+import os
+import numpy as np
+from datetime import datetime
 
-from config import DEBUG, MAX_STIM_CHANNELS_MAXWELL
+from maxwellio.array import MaxWellElectrodeArray, MockElectrodeArray
+from maxwellio.saving import EmptyLocalSaving, MaxWellLocalSaving
+from maxwellio.sampling import MAX_N_SAMPLING_CHANNELS
+
+from config import DEBUG, MAX_STIM_EL_MAXWELL
 from utils.logger import setup_logger
 logger = setup_logger(__name__, debug=DEBUG)
+
+_UPDATE_REC_DATE = False
 
 def init_maxwell_array(fpath_cfg_elec_array):
         """Initialize Maxwell array and stim electrodes"""
@@ -34,31 +42,35 @@ def init_maxwell_array(fpath_cfg_elec_array):
         cfg = elec_array.get_config()
         logger.info("Load electrode array configuration from file:%s", fpath_cfg_elec_array)
 
+        # Generate mapping conv channels to electrodes
+        chan2el = np.zeros(MAX_N_SAMPLING_CHANNELS, dtype=np.int32)
+        for mapping in cfg.mappings:
+            chan2el[mapping.channel] = mapping.electrode
+
         elec_array.download()
         elec_array.offset()
         logger.info("Downloaded electrode array configuration")
 
+
         # Return electrode array and channel/electrode mapping
-        return elec_array, cfg
+        return elec_array, chan2el
 
-def connect_stimulation_el(stim_el:list, elec_array:ElectrodeArray):
-        if len(channels) > MAX_STIM_CHANNELS_MAXWELL:
-            logger.warning("Too many stimulation channels required, cropped list to %d", MAX_STIM_CHANNELS_MAXWELL)
-            channels = channels[:MAX_STIM_CHANNELS_MAXWELL]
-        
-        # Setting up stimulation units
-        stimulation_units = []
-        for el in stim_el:
-            elec_array.connect_electrode_to_stimulation( el )
-            stim = elec_array.query_stimulation_at_electrode( el )
-            if stim:
-                stimulation_units.append( stim )
-            else:
-                logger.warning("No stimulation channel can connect to electrode: %d", el)
+def init_maxwell_saver(fpath_cfg_file, dirpath_save):
+    """Initiliaze Maxwell saver for recording"""
+    fname = os.path.splitext(os.path.basename(fpath_cfg_file))[0]
 
-        for stimulation_unit in stimulation_units:
-            elec_array.power_up_stimulation_unit(stimulation_unit)
+    # Save with current date
+    if _UPDATE_REC_DATE:
+        fname = datetime.today().strftime('%Y%m%d_') + fname.split('_',1)[1] # update date
 
-        logger.info("Connected stimulation electrodes and powered up units")
+    fpath_save_no_ext = os.path.join(dirpath_save, fname)
 
-        return stimulation_units
+    if not DEBUG:
+        with open(fpath_save_no_ext + '.raw.h5', 'w') as f: 
+            f.write(fpath_save_no_ext)
+            f.close()
+        maxwell_saving = EmptyLocalSaving()
+    else:
+        maxwell_saving = MaxWellLocalSaving()
+
+    return maxwell_saving, fpath_save_no_ext

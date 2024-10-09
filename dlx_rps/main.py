@@ -12,7 +12,7 @@
 # * MaxwellStimulationThread: receive pattern via pyqtsignal and stimulation Maxwell
 # * PatternGeneratorThread: generate patterns from hand gestures
 # * ActivityAnalysisThread: analyze data and provide output results
-# * (TODO) Add data recording
+# * Record raw data if enabled
 # 
 # @details
 
@@ -20,20 +20,15 @@
 import os, sys
 import numpy as np
 import time
-from config import DEBUG, MAX_STIM_CHANNELS_MAXWELL, MAX_PARAMS_STIM_MAXWELL
+from config import DEBUG, MAX_STIM_EL_MAXWELL, MAX_PARAMS_STIM_MAXWELL
 
 # pyqt
 from PyQt5.QtWidgets    import (QApplication)
 from PyQt5.QtCore       import (QThread, pyqtSignal, QTimer)
 
-# Maxwell I/O
-from maxwellio.saving import (MaxWellLocalSaving)
-from maxwellio.array import (MockElectrodeArray, MaxWellElectrodeArray, N_MAP_COLUMNS)
-from maxwellio.stimulation import (MaxWellStimulator, PulseStreamStimulatorBuilder, SquareWaveStimulatorBuilder, EmptyStimulator)
-
 # Configuration files and setup
 from utils.load_cfg import load_yaml_configuration_file
-from utils.maxwell_setup import init_maxwell_array, connect_stimulation_el
+from utils.maxwell_setup import init_maxwell_array, init_maxwell_saver
 
 # Logging
 from utils.logger import setup_logger
@@ -56,8 +51,9 @@ class MainWindow():
         self.timeout = cfg.get('RUNTIME')
         self.maxwell_params = cfg.get('MAXWELL_PARAMS', {})
 
-        # Initialize Maxwell array
-        self_maxwell_el_array, self.maxwell_cfg_el_array = init_maxwell_array(self.maxwell_params['ELEC_ARRAY']['FPATH_CFG'])
+        # Initialize Maxwell
+        self.maxwell_el_array, self.chan2el = init_maxwell_array(self.maxwell_params['ELEC_ARRAY']['FPATH_CFG'])
+        self.maxwell_saver, self.fpath_rec_save = init_maxwell_saver(fpath_cfg, self.maxwell_params['SAVING']['DIRPATH'])
 
         # Initialize threads
         self.maxwell_read_thread = MaxwellReadStreamThread( 
@@ -68,14 +64,14 @@ class MainWindow():
         self.pattern_gen_thread  = PatternGeneratorThread( 
                                    )
         self.act_analysis_thread = ActivityAnalysisThread(
-                                    self.maxwell_read_thread.rx_samples_rdy # pipe signal from read data maxwell
+                                    self.maxwell_read_thread.rx_samples_rdy, # pipe signal from read data maxwell
+                                    self.chan2el
                                    )
         
         self.maxwell_stim_thread = MaxwellStimulationThread( 
-                                    self_maxwell_el_array,
-                                    self.maxwell_cfg_el_array,
+                                    self.maxwell_el_array,
                                     self.pattern_gen_thread.stim_flag_data, # pipe signal from gen pattern
-                                    self.maxwell_params['UNIFIED_STIMULATOR']['CHAN_ID'],
+                                    self.maxwell_params['UNIFIED_STIMULATOR']['EL_ID'],
                                     self.maxwell_params['UNIFIED_STIMULATOR']['AMP_MV'], 
                                     self.maxwell_params['UNIFIED_STIMULATOR']['FREQ_HZ']
                                    )
@@ -83,17 +79,13 @@ class MainWindow():
         # Start experiment
         self.start()
 
-    def dummy_link_sample_stream(self, rx_samples:np.ndarray):
-        """Dummy link to Maya thread: samples read from Maxwell"""
-        # print(rx_samples)
-
-    def dummy_link_stimulation_source(self):
-        """Dummy link to Maya thread: trigger stimulation"""
-        pass
-
     def start(self):
         """Start the experiment"""
         logger.info("Start experiment")
+
+        # Start Maxwell recording
+        if self.maxwell_params['SAVING']['SAVE_RAW']:
+            self.maxwell_saver.start(self.fpath_rec_save)
 
         # Start threads
         self.maxwell_read_thread.start()
@@ -120,13 +112,17 @@ class MainWindow():
         self.pattern_gen_thread.wait()
         self.act_analysis_thread.wait()
 
+        # Stop Maxwell recording
+        if self.maxwell_params['SAVING']['SAVE_RAW']:
+            self.maxwell_saver.stop()
+
         # Close application
         self.close_qt_app()
 
     def close_qt_app(self):
+        """Close Qt application"""
         logger.info("Close application")
         sys.exit()
-
 
 if __name__ == "__main__":
     # Run application
