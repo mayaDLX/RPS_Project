@@ -3,9 +3,12 @@ import websockets
 import show_stream
 import args
 import pygame
+from PyQt5.QtCore import pyqtSignal, QObject
 
 
 class WebSocketServer:
+    posture_changed = pyqtSignal(str)
+
     def __init__(self, host="localhost", port=5678):
         self.host = host
         self.port = port
@@ -40,6 +43,7 @@ class WebSocketServer:
                     if event.key == self.keys[i]:
                         self.stream.update_by_input(i)
                         self.current_posture = self.messages[i]  # Update the current posture
+                        self.posture_changed.emit(self.current_posture)  # Emit posture change
                         break
 
     async def check_input(self):

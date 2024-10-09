@@ -18,6 +18,7 @@ from PyQt5.QtCore import (QThread, pyqtSignal)
 
 from config import DEBUG, MAX_STIM_EL_MAXWELL, MAX_PARAMS_STIM_MAXWELL, PARAMS_STIM_MAXWELL
 from utils.logger import setup_logger
+
 logger = setup_logger(__name__, debug=DEBUG)
 
 class PatternGeneratorThread(QThread):
@@ -40,6 +41,10 @@ class PatternGeneratorThread(QThread):
         self.dummy_stim_pattern[:,PARAMS_STIM_MAXWELL['EL_ID']] = np.arange(MAX_STIM_EL_MAXWELL)
         self.dummy_stim_pattern[:,PARAMS_STIM_MAXWELL['STIM_AMP_MV']] = 400
         self.dummy_stim_pattern[:,PARAMS_STIM_MAXWELL['STIM_FREQ_HZ']] = 100
+        self.posture = None
+
+    def update_posture(self, posture):
+        self.posture = posture
 
     def send_stim_pattern(self):
         self.stim_flag_data.emit(self.dummy_stim_pattern)
