@@ -86,32 +86,25 @@ class VisualizeStream:
             if self.frame_index >= len(self.burst_frames):
                 self.burst_active = False  # End the animation after all frames are shown
 
-    def main_loop(self):
-        while self.running:
-            # Fill the small screen with a white background
-            self.pixels_screen.fill(args.WHITE)
+    def screen_iteration(self):
+        # Fill the small screen with a white background
+        self.pixels_screen.fill(args.WHITE)
 
-            self.check_input()
+        # Generate random black dots as background
+        self.pixels_screen.blit(generate_random_black_dots(), (0, 0))
 
-            # Generate random black dots as background
-            self.pixels_screen.blit(generate_random_black_dots(), (0, 0))
+        # If burst is active, play the animation in the selected location
+        self.play_animation()
 
-            # If burst is active, play the animation in the selected location
-            self.play_animation()
+        # Scale up the small screen to the larger window
+        scaled_screen = pygame.transform.scale(self.pixels_screen, args.SCALED_SIZE)
 
-            # Scale up the small screen to the larger window
-            scaled_screen = pygame.transform.scale(self.pixels_screen, args.SCALED_SIZE)
+        # Blit the scaled surface to the actual screen
+        self.view_screen.blit(scaled_screen, (0, 0))
 
-            # Blit the scaled surface to the actual screen
-            self.view_screen.blit(scaled_screen, (0, 0))
-
-            # Update the display
-            pygame.display.flip()
-            self.clock.tick(self.fps)  # Limit the frame rate to the specified FPS
-
-            # Quit Pygame
-        pygame.quit()
-
+        # Update the display
+        pygame.display.flip()
+        self.clock.tick(self.fps)  # Limit the frame rate to the specified FPS
 
 def main():
     vs = VisualizeStream()

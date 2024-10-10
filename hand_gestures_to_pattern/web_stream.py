@@ -71,26 +71,10 @@ class WebSocketServer:
                 if event.type == pygame.QUIT:
                     self.stream.running = False
 
-            # Fill the small screen with a white background
-            self.stream.pixels_screen.fill(args.WHITE)
-
-            # Generate random black dots as background
-            self.stream.pixels_screen.blit(show_stream.generate_random_black_dots(), (0, 0))
-
             await self.check_input()
 
-            # If burst is active, play the animation in the selected location
-            self.stream.play_animation()
+            self.stream.screen_iteration()
 
-            # Scale up the small screen to the larger window
-            scaled_screen = pygame.transform.scale(self.stream.pixels_screen, args.SCALED_SIZE)
-
-            # Blit the scaled surface to the actual screen
-            self.stream.view_screen.blit(scaled_screen, (0, 0))
-
-            # Update the display
-            pygame.display.flip()
-            self.stream.clock.tick(self.stream.fps)  # Limit the frame rate to the specified FPS
 
     # Main function to run both the WebSocket server and the screen loop concurrently
     async def run(self):
