@@ -43,20 +43,15 @@ class PatternGeneratorThread(QThread):
         self.dummy_stim_pattern[:,PARAMS_STIM_MAXWELL['STIM_FREQ_HZ']] = 100
         self.posture = None
 
-    def update_posture(self, posture):
-        self.posture = posture
-
-    def send_stim_pattern(self):
+    def send_stim_pattern(self, posture):
+        logger.info(f"Received posture change: {posture}")
         self.stim_flag_data.emit(self.dummy_stim_pattern)
-        logger.debug("Send stimulation pattern ...")
 
     def run(self):
         """Run thread"""
-        logger.info("Start pattern generation ...")
-
-        while not self.stop_requested:
-            self.send_stim_pattern()
-            time.sleep(0.5)
+        # while not self.stop_requested:
+            # self.send_stim_pattern()
+            # time.sleep(0.5)
 
     def stop(self):
         """Stop thread"""
