@@ -4,11 +4,11 @@
 # @date       09 Oct 2024
 import numpy as np
 import pygame
-from hand_gestures_to_pattern import args, pygame_screen
+from hand_gestures_to_pattern import pygame_screen, frame_processor
 import websockets
 import asyncio
 import threading
-from PyQt5.QtCore import pyqtSignal, QObject, QThread
+from PyQt5.QtCore import pyqtSignal, QThread
 
 
 class WebSocketThread(QThread):
@@ -21,6 +21,7 @@ class WebSocketThread(QThread):
         self.client_input = None  # Store input from the WebSocket client
         self.current_posture = None  # Track the current posture
         self.server = None
+        self.frame_processor = frame_processor.FrameProcessor()
         self.screen = pygame_screen.PygameScreen()
         self.messages = ["rock", "paper", "scissors"]
         self.key_events = []
@@ -52,7 +53,7 @@ class WebSocketThread(QThread):
             if self.client_input != self.current_posture:  # Only if posture has changed
                 for i in range(len(self.messages)):
                     if self.client_input == self.messages[i]:
-                        self.screen.update_by_input(i)
+                        self.frame_processor.update(i)
                         self.current_posture = self.client_input  # Update the current posture
                         break
         else:
@@ -66,7 +67,7 @@ class WebSocketThread(QThread):
             elif event.type == pygame.KEYDOWN:
                 for i in range(len(self.keys)):
                     if event.key == self.keys[i]:
-                        self.screen.update_by_input(i)
+                        self.frame_processor.update(i)
                         self.current_posture = self.messages[i]
                         self.posture_changed.emit(self.current_posture)  # Emit posture change
                         break
@@ -88,7 +89,9 @@ class WebSocketThread(QThread):
             # Check client input and react
             self.receive_key_input_debug()
 
-            self.screen.screen_iteration()
+            next_frame = self.frame_processor.get_next_frame()
+
+            self.screen.screen_iteration(next_frame)
 
         # Clean up when loop exits
         websocket_thread.join()

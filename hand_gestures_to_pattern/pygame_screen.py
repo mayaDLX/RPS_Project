@@ -34,19 +34,12 @@ class PygameScreen:
         self.frame_index = 0
         self.active_quadrant = i + 1
 
-    def screen_iteration(self):
+    def screen_iteration(self, frame_data):
 
-        background = patterns_generator.generate_background_2d((args.WIDTH, args.HEIGHT))
-
-        if self.burst_active:
-            location = args.calc_quarter_location(self.active_quadrant)
-            # Blit the pattern into the specified location on the small screen
-            patterns_generator.insert_2d_subarray(background, self.burst_array[self.frame_index], location)
-            self.frame_index += 1
-            if self.frame_index >= len(self.burst_array):
-                self.burst_active = False  # End the animation after all frames are shown
         surface = pygame.Surface((args.WIDTH, args.HEIGHT))
-        pygame.surfarray.blit_array(surface, np.stack([background] * 3, axis=-1))
+
+        pygame.surfarray.blit_array(surface, np.stack([frame_data] * 3, axis=-1))
+
         # # Generate random black dots as background
         self.pixels_screen.blit(surface, (0, 0))
 

@@ -1,6 +1,7 @@
 import asyncio
 import websockets
 from pygame_screen import PygameScreen
+from frame_processor import FrameProcessor
 import pygame
 from PyQt5.QtCore import pyqtSignal, QObject
 
@@ -15,6 +16,7 @@ class WebSocketServer:
         self.current_posture = None  # Track the current posture
         self.server = None
         self.screen = PygameScreen()
+        self.frame_processor = FrameProcessor()
         self.messages = ["rock", "paper", "scissors"]
         self.key_events = []
         self.keys = [pygame.K_1, pygame.K_2, pygame.K_3, pygame.K_4]
@@ -40,7 +42,7 @@ class WebSocketServer:
             if event.type == pygame.KEYDOWN:
                 for i in range(len(self.keys)):
                     if event.key == self.keys[i]:
-                        self.screen.update_by_input(i)
+                        self.frame_processor.update(i)
                         self.current_posture = self.messages[i]  # Update the current posture
                         break
 
@@ -51,7 +53,7 @@ class WebSocketServer:
             if self.client_input != self.current_posture:  # Only if posture has changed
                 for i in range(len(self.messages)):
                     if self.client_input == self.messages[i]:
-                        self.screen.update_by_input(i)
+                        self.frame_processor.update(i)
                         self.current_posture = self.client_input  # Update the current posture
                         break
         else:
@@ -72,7 +74,8 @@ class WebSocketServer:
 
             await self.check_input()
 
-            self.screen.screen_iteration()
+            next_frame = self.frame_processor.get_next_frame()
+            self.screen.screen_iteration(next_frame)
 
 
     # Main function to run both the WebSocket server and the screen loop concurrently
