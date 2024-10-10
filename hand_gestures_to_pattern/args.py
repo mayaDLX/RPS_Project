@@ -21,7 +21,7 @@ PERLIN = 2
 PULSE = 3
 PULSE_SPEED = 0.3
 
-CHOSEN_PATTERN = PERLIN
+CHOSEN_PATTERN = PULSE
 
 
 def calc_quarter_location(quadrant):

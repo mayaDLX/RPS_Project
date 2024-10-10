@@ -39,7 +39,7 @@ from threads.MaxwellReadStreamThread import MaxwellReadStreamThread
 from threads.MaxwellStimulationThread import MaxwellStimulationThread
 from threads.PatternGeneratorThread import PatternGeneratorThread
 from threads.ActivityAnalysisThread import ActivityAnalysisThread
-
+from threads.PygameScreenThread import WebSocketThread
 class MainWindow():
     """Main application"""
     def __init__(self, app):
@@ -63,6 +63,7 @@ class MainWindow():
         
         self.pattern_gen_thread  = PatternGeneratorThread( 
                                    )
+        self.pygame_thread = WebSocketThread()
         self.act_analysis_thread = ActivityAnalysisThread(
                                     self.maxwell_read_thread.rx_samples_rdy, # pipe signal from read data maxwell
                                     self.chan2el
@@ -92,9 +93,10 @@ class MainWindow():
         self.maxwell_stim_thread.start()
         self.pattern_gen_thread.start()
         self.act_analysis_thread.start()
+        self.pygame_thread.start()
 
         # Start timers
-        self.timer_timeout_exp = QTimer.singleShot(self.timeout*1000, self.stop)
+        # self.timer_timeout_exp = QTimer.singleShot(self.timeout*1000, self.stop)
     
     def stop(self):
         """Stop the experiment"""
@@ -105,12 +107,14 @@ class MainWindow():
         self.maxwell_stim_thread.stop()
         self.pattern_gen_thread.stop()
         self.act_analysis_thread.stop()
+        self.pygame_thread.stop()
 
         # Join threads
         self.maxwell_read_thread.wait()
         self.maxwell_stim_thread.wait()
         self.pattern_gen_thread.wait()
         self.act_analysis_thread.wait()
+        self.pygame_thread.wait()
 
         # Stop Maxwell recording
         if self.maxwell_params['SAVING']['SAVE_RAW']:

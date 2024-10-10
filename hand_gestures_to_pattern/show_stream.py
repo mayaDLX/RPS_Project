@@ -1,8 +1,7 @@
 import pygame
 import random
-import args
+from hand_gestures_to_pattern import args, patterns_generator
 import numpy as np
-import patterns_generator
 
 
 def convert_array_to_frames(array: np.ndarray):

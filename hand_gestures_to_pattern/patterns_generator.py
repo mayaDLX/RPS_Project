@@ -1,6 +1,6 @@
 import numpy as np
 import noise
-import args
+from hand_gestures_to_pattern import args
 
 
 def generate_random_pattern(shape, min_value=0, max_value=256, step=255):
