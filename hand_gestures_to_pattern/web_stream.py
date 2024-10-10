@@ -1,7 +1,6 @@
 import asyncio
 import websockets
-import show_stream
-import args
+from pygame_screen import PygameScreen
 import pygame
 from PyQt5.QtCore import pyqtSignal, QObject
 
@@ -15,7 +14,7 @@ class WebSocketServer:
         self.client_input = None  # Store input from the WebSocket client
         self.current_posture = None  # Track the current posture
         self.server = None
-        self.stream = show_stream.VisualizeStream()
+        self.screen = PygameScreen()
         self.messages = ["rock", "paper", "scissors"]
         self.key_events = []
         self.keys = [pygame.K_1, pygame.K_2, pygame.K_3, pygame.K_4]
@@ -41,7 +40,7 @@ class WebSocketServer:
             if event.type == pygame.KEYDOWN:
                 for i in range(len(self.keys)):
                     if event.key == self.keys[i]:
-                        self.stream.update_by_input(i)
+                        self.screen.update_by_input(i)
                         self.current_posture = self.messages[i]  # Update the current posture
                         break
 
@@ -52,7 +51,7 @@ class WebSocketServer:
             if self.client_input != self.current_posture:  # Only if posture has changed
                 for i in range(len(self.messages)):
                     if self.client_input == self.messages[i]:
-                        self.stream.update_by_input(i)
+                        self.screen.update_by_input(i)
                         self.current_posture = self.client_input  # Update the current posture
                         break
         else:
@@ -63,17 +62,17 @@ class WebSocketServer:
 
     # Main loop to process client input and render animation
     async def screen_loop(self):
-        while self.stream.running:
+        while self.screen.running:
 
             # Handle Pygame events (this prevents freezing)
             self.key_events = pygame.event.get()
             for event in self.key_events:
                 if event.type == pygame.QUIT:
-                    self.stream.running = False
+                    self.screen.running = False
 
             await self.check_input()
 
-            self.stream.screen_iteration()
+            self.screen.screen_iteration()
 
 
     # Main function to run both the WebSocket server and the screen loop concurrently

@@ -4,7 +4,7 @@
 # @date       09 Oct 2024
 import numpy as np
 import pygame
-from hand_gestures_to_pattern import args, show_stream
+from hand_gestures_to_pattern import args, pygame_screen
 import websockets
 import asyncio
 import threading
@@ -21,7 +21,7 @@ class WebSocketThread(QThread):
         self.client_input = None  # Store input from the WebSocket client
         self.current_posture = None  # Track the current posture
         self.server = None
-        self.stream = show_stream.VisualizeStream()
+        self.screen = pygame_screen.PygameScreen()
         self.messages = ["rock", "paper", "scissors"]
         self.key_events = []
         self.keys = [pygame.K_1, pygame.K_2, pygame.K_3, pygame.K_4]
@@ -52,7 +52,7 @@ class WebSocketThread(QThread):
             if self.client_input != self.current_posture:  # Only if posture has changed
                 for i in range(len(self.messages)):
                     if self.client_input == self.messages[i]:
-                        self.stream.update_by_input(i)
+                        self.screen.update_by_input(i)
                         self.current_posture = self.client_input  # Update the current posture
                         break
         else:
@@ -66,7 +66,7 @@ class WebSocketThread(QThread):
             elif event.type == pygame.KEYDOWN:
                 for i in range(len(self.keys)):
                     if event.key == self.keys[i]:
-                        self.stream.update_by_input(i)
+                        self.screen.update_by_input(i)
                         self.current_posture = self.messages[i]
                         self.posture_changed.emit(self.current_posture)  # Emit posture change
                         break
@@ -88,28 +88,7 @@ class WebSocketThread(QThread):
             # Check client input and react
             self.receive_key_input_debug()
 
-            # # Check client input and react
-            # self.handle_key_interruptions()
-            # self.receive_client_input()
-
-            # Fill the small screen with a white background
-            self.stream.pixels_screen.fill(args.WHITE)
-
-            # Generate random black dots as background
-            self.stream.pixels_screen.blit(show_stream.generate_random_black_dots(), (0, 0))
-
-            # If burst is active, play the animation in the selected location
-            self.stream.play_animation()
-
-            # Scale up the small screen to the larger window
-            scaled_screen = pygame.transform.scale(self.stream.pixels_screen, args.SCALED_SIZE)
-
-            # Blit the scaled surface to the actual screen
-            self.stream.view_screen.blit(scaled_screen, (0, 0))
-
-            # Update the display
-            pygame.display.flip()
-            self.stream.clock.tick(self.stream.fps)  # Limit the frame rate to the specified FPS
+            self.screen.screen_iteration()
 
         # Clean up when loop exits
         websocket_thread.join()

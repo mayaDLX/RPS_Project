@@ -1,10 +1,9 @@
 import pygame
-import random
 from hand_gestures_to_pattern import args, patterns_generator
 import numpy as np
 
 
-class VisualizeStream:
+class PygameScreen:
 
     def __init__(self):
         # Game screen setup:
