@@ -1,6 +1,7 @@
 import numpy as np
 import noise
 from hand_gestures_to_pattern import args
+import random
 
 
 def generate_random_pattern(shape, min_value=0, max_value=256, step=255):
@@ -39,6 +40,23 @@ def generate_perlin_noise_3d(shape, scale=0.1, octaves=6, persistence=0.5, lacun
     return noise_array
 
 
+def insert_2d_subarray(large_array, small_array, position):
+    large_array[position[0]:position[0] + small_array.shape[0],
+                position[1]:position[1] + small_array.shape[1]] = small_array
+
+
+def generate_background_2d(shape):
+    background = np.ones(shape) * args.WHITE[0]
+    for _ in range(args.VOL_BACKGROUND_NOISE):  # Add random black pixels
+        x, y = random.randint(0, args.WIDTH - 1), random.randint(0, args.HEIGHT - 1)
+        background[x, y] = args.BLACK[0]
+    return background
+
+
+def white_background(shape):
+    return np.ones(shape) * args.WHITE
+
+
 def create_pulse_animation_array(shape, pulse_speed):
     animation_array = np.zeros(shape,
                                dtype=np.uint8)  # 3D numpy array for (frames, height, width)
@@ -72,5 +90,3 @@ def generate_patten_array(pattern_type, shape):
     if pattern_type == args.PULSE:
         pattern = create_pulse_animation_array(shape, args.PULSE_SPEED)
     return pattern
-
-

@@ -4,36 +4,6 @@ from hand_gestures_to_pattern import args, patterns_generator
 import numpy as np
 
 
-def convert_array_to_frames(array: np.ndarray):
-    """Convert a 3D NumPy array into a list of Pygame surfaces matching the quadrant size."""
-    frames = []
-    shape = array.shape  # shape = (F, H, W)
-    for frame in array:
-        surface = pygame.Surface((shape[2], shape[1]))  # Create surface matching quadrant size
-        pygame.surfarray.blit_array(surface, np.stack([frame] * 3, axis=-1))  # Convert to RGB format
-        frames.append(surface)
-
-    return frames
-
-
-def generate_random_black_dots():
-    """Generate random black pixels placed on the screen."""
-    surface = pygame.Surface((args.WIDTH, args.HEIGHT))
-    surface.fill(args.WHITE)  # Start with a white surface
-
-    for _ in range(args.VOL_BACKGROUND_NOISE):  # Add random black pixels
-        x, y = random.randint(0, args.WIDTH - 1), random.randint(0, args.HEIGHT - 1)
-        surface.set_at((x, y), args.BLACK)
-
-    return surface
-
-
-def generate_visual_pattern(pattern_type, shape):
-    array = patterns_generator.generate_patten_array(pattern_type, shape)
-    frames = convert_array_to_frames(array)
-    return frames
-
-
 class VisualizeStream:
 
     def __init__(self):
@@ -53,48 +23,33 @@ class VisualizeStream:
 
         # Main loop setup:
         self.running = True
-        self.burst_frames = []
+        self.burst_array = []
         self.frame_index = 0
         self.burst_active = False
         self.active_quadrant = 0
-        self.constant_pattern = generate_visual_pattern(args.CHOSEN_PATTERN, args.PATTERN_QUARTER_SHAPE)
-
-        self.keys = [pygame.K_1, pygame.K_2, pygame.K_3, pygame.K_4]
+        self.constant_pattern_array = patterns_generator.generate_patten_array(args.CHOSEN_PATTERN, args.PATTERN_QUARTER_SHAPE)
 
     def update_by_input(self, i):
-        self.burst_frames = self.constant_pattern
+        self.burst_array = self.constant_pattern_array
         self.burst_active = True
         self.frame_index = 0
         self.active_quadrant = i + 1
 
-    def check_input(self):
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                self.running = False
+    def screen_iteration(self):
 
-            elif event.type == pygame.KEYDOWN:
-                for i in range(len(self.keys)):
-                    if event.key == self.keys[i]:
-                        self.update_by_input(i)
+        background = patterns_generator.generate_background_2d((args.WIDTH, args.HEIGHT))
 
-    def play_animation(self):
         if self.burst_active:
             location = args.calc_quarter_location(self.active_quadrant)
             # Blit the pattern into the specified location on the small screen
-            self.pixels_screen.blit(self.burst_frames[self.frame_index], location)
+            patterns_generator.insert_2d_subarray(background, self.burst_array[self.frame_index], location)
             self.frame_index += 1
-            if self.frame_index >= len(self.burst_frames):
+            if self.frame_index >= len(self.burst_array):
                 self.burst_active = False  # End the animation after all frames are shown
-
-    def screen_iteration(self):
-        # Fill the small screen with a white background
-        self.pixels_screen.fill(args.WHITE)
-
-        # Generate random black dots as background
-        self.pixels_screen.blit(generate_random_black_dots(), (0, 0))
-
-        # If burst is active, play the animation in the selected location
-        self.play_animation()
+        surface = pygame.Surface((args.WIDTH, args.HEIGHT))
+        pygame.surfarray.blit_array(surface, np.stack([background] * 3, axis=-1))
+        # # Generate random black dots as background
+        self.pixels_screen.blit(surface, (0, 0))
 
         # Scale up the small screen to the larger window
         scaled_screen = pygame.transform.scale(self.pixels_screen, args.SCALED_SIZE)
@@ -105,11 +60,3 @@ class VisualizeStream:
         # Update the display
         pygame.display.flip()
         self.clock.tick(self.fps)  # Limit the frame rate to the specified FPS
-
-def main():
-    vs = VisualizeStream()
-    vs.main_loop()
-
-
-if __name__ == '__main__':
-    main()
